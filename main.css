@@ -1,0 +1,90 @@
+/* Variables! */
+:root {
+    /* Random sizes for stuff! */
+    --space-xs: 0.25rem; /* 4px */
+    --space-s:  0.5rem;  /* 8px */
+    --space-m:  1rem;    /* 16px */
+    --space-l:  1.5rem;  /* 24px */
+    --space-xl: 2rem;    /* 32px */
+    /* colors */
+    --text-color: white;
+    /* sidebar */
+    --sidebar-width: 250px; /* px is okay for a fixed sidebar */
+    --sidebar-bg-color: #2c3e50;
+    --sidebar-text-color: var(--text-color);
+    --sidebar-padding: var(--space-m);
+    /* main */
+    --main-bg-color: #111a24;
+    --main-padding: var(--space-m);
+    --main-text-color: var(--text-color);
+}
+
+/* Global Rules */
+* {
+  box-sizing: border-box;
+}
+
+/* everything is flexbox! */
+body, 
+main, 
+section, 
+aside, 
+header, 
+footer, 
+nav {
+  display: flex;
+}
+
+/* stop using browser defaults and listen to the parent */
+aside a, 
+aside button, 
+aside input {
+    color: inherit;
+}
+
+/* Force body to be the size of screen */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* 100% of the Viewport Height */
+  width: 100vw;  /* 100% of the Viewport Width */
+  overflow: hidden; /* Prevent the whole page from scrolling */
+}
+
+/* sidebar to the left, main to the right */
+body {
+  flex-direction: row;
+}
+
+/* Sidebar */
+aside {
+  width: var(--sidebar-width); /* Fixed width */
+  min-width: var(--sidebar-width); /* Don't let flex shrink it */
+  height: 100%; /* Full height */
+  background-color: var(--sidebar-bg-color);
+  color: var(--sidebar-text-color);
+  flex-direction: column; /* elements stack downwards */
+  padding: var(--sidebar-padding);
+  overflow-y: auto; /* Add a scrollbar if the content gets too long vertically */
+  overflow-x: hidden; /* */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Main Area */
+main {
+  flex: 1;           /* Take up all remaining horizontal space */
+  height: 100%;      /* Full height */
+  background-color: var(--main-bg-color);
+  flex-direction: column;
+  color: var(--main-text-color);
+  /* This is the magic for scrolling */
+  overflow-y: auto;  /* Only scroll vertically if content overflows */
+  padding: var(--main-padding);
+}
+
+/* style for showing borders erase it when page is finished*/
+div, section, article, aside, header, footer, main, nav, canvas, button {
+    box-shadow: 0 0 0 1px red;
+    position: relative;
+}
