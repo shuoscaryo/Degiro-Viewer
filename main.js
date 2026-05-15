@@ -111,7 +111,12 @@ async function handler_fileUpload(event)
     `count of format flatexInterests ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "flatexInterest").length}, ` +
     `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
   );
-  console.table(csv.filter(row => row[HEADER_MARKED_TAG]));
+  // Remove random rows
+  csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /Cambio de Divisa/i);
+  csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /^Transferir \w+ su Cuenta de Efectivo en flatexDegiro Bank:/i);
+  csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /Degiro Cash Sweep Transfer/i);
+  console.log(`currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`);
+  console.table(csv.filter(row => !row[HEADER_MARKED_TAG]));
   // After parsing everything marked can be removed
   csv = CSV_dropCol(csv, HEADER_MARKED_TAG);
 }
@@ -139,6 +144,11 @@ function CSV_dropCol(/*const*/ csv, col) {
   return csv.map(({ [col]: _, ...rest }) => rest);
 }
 
+function CSV_dropRows(/*const*/ csv, col, regex)
+{
+  return csv.filter(row => regex.test(row[col]) !== true);
+}
+
 function CSV_formatDate(/*const*/ csv)
 {
   // For each row, pick the date headers and merge them into one column of Date type
@@ -156,6 +166,8 @@ function CSV_formatDate(/*const*/ csv)
     };
   });
 }
+
+
 // TODO this should also match withdrawals
 // TODO Check what to do with this
 // DATE,,,Flatex Instant Deposit,,EUR,"500,00",EUR,"85,96",
@@ -176,7 +188,6 @@ function CSV_formatDeposits(/*const*/ csv)
       console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
       return {...row};
     }
-    console.log(row[IN_CSV_HEADER_DESCRIPCION]);
     // Save fields
     return {
       [HEADER_DATE]: row[HEADER_DATE], // Mandatory
