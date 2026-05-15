@@ -77,9 +77,15 @@ async function handler_fileUpload(event)
   csv = CSV_formatDate(csv);
   csv = CSV_dropCol(csv, "ID Orden");
   csv = CSV_formatOperations(csv);
-  console.log(`Marked after format operations ${csv.filter(row => row[HEADER_MARKED_TAG]).length}/ ${csv.length}`);
+  console.log(
+    `count of format operations ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "operation").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
   csv = CSV_formatFees(csv);
-  console.log(`Marked after format fees ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`);
+  console.log(
+    `count of format fees ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "fee").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
   
 }
 
@@ -124,6 +130,23 @@ function CSV_dropCol(/*const*/ csv, col) {
   return csv.map(({ [col]: _, ...rest }) => rest);
 }
 
+function CSV_formatAnualFees(/*const*/ csv)
+{
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Euronext Paris - EPA),,EUR,"-2,50",EUR,"39,74",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (New York Stock Exchange - NSY),,EUR,"-2,50",EUR,"42,24",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Nasdaq - NDQ),,EUR,"-2,50",EUR,"44,74",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Euronext Milan - MIL),,EUR,"-2,50",EUR,"47,24",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (London Stock Exchange (LSE) - LSE),,EUR,"-2,50",EUR,"49,74",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Tradegate AG - TDG),,EUR,"-2,50",EUR,"52,24",
+// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Xetra - XET),,EUR,"-2,50",EUR,"54,74",
+}
+
+function CSV_formatFlatexInterest(/*const*/ csv)
+{
+  // This one is always 0
+//06-01-2025,06:51,02-01-2025,,,Flatex Interest Income,,EUR,"0,00",EUR,"17,57",
+}
+
 function CSV_formatFees(csv)
 {
   // Finds all rows that match the pattern and gives them a new format
@@ -132,9 +155,8 @@ function CSV_formatFees(csv)
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
-    const match = regex.test(row[IN_CSV_HEADER_DESCRIPCION]);
     // Don't touch rows that don't match
-    if (match !== true)
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
       return {...row};
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
