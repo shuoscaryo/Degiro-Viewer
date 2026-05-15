@@ -167,7 +167,6 @@ function CSV_formatDate(/*const*/ csv)
   });
 }
 
-
 // TODO this should also match withdrawals
 // TODO Check what to do with this
 // DATE,,,Flatex Instant Deposit,,EUR,"500,00",EUR,"85,96",
