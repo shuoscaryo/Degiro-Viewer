@@ -76,6 +76,11 @@ async function handler_fileUpload(event)
   let csv = CSV_parse(text);
   csv = CSV_formatDate(csv);
   csv = CSV_dropCol(csv, "ID Orden");
+  csv = CSV_formatDeposits(csv);
+  console.log(
+    `count of format deposits ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "deposit").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
   csv = CSV_formatOperations(csv);
   console.log(
     `count of format operations ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "operation").length}, ` +
@@ -86,7 +91,29 @@ async function handler_fileUpload(event)
     `count of format fees ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "fee").length}, ` +
     `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
   );
-  
+  csv = CSV_formatAnualFees(csv);
+  console.log(
+    `count of format anualFees ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "anualFee").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
+  csv = CSV_formatDividends(csv);
+  console.log(
+    `count of format dividends ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "dividend").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
+  csv = CSV_formatDividendRetentions(csv);
+  console.log(
+    `count of format dividendRetentions ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "dividendRetention").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
+  csv = CSV_formatFlatexInterests(csv);
+  console.log(
+    `count of format flatexInterests ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "flatexInterest").length}, ` +
+    `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
+  );
+  console.table(csv.filter(row => row[HEADER_MARKED_TAG]));
+  // After parsing everything marked can be removed
+  csv = CSV_dropCol(csv, HEADER_MARKED_TAG);
 }
 
 function CSV_parse(text)
@@ -106,6 +133,12 @@ function CSV_parse(text)
   return parsed.data;
 }
 
+function CSV_dropCol(/*const*/ csv, col) {
+  // Removes a column from the csv
+  // If col doesn't exist it doesn't do anything
+  return csv.map(({ [col]: _, ...rest }) => rest);
+}
+
 function CSV_formatDate(/*const*/ csv)
 {
   // For each row, pick the date headers and merge them into one column of Date type
@@ -123,35 +156,15 @@ function CSV_formatDate(/*const*/ csv)
     };
   });
 }
-
-function CSV_dropCol(/*const*/ csv, col) {
-  // Removes a column from the csv
-  // If col doesn't exist it doesn't do anything
-  return csv.map(({ [col]: _, ...rest }) => rest);
-}
-
-function CSV_formatAnualFees(/*const*/ csv)
-{
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Euronext Paris - EPA),,EUR,"-2,50",EUR,"39,74",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (New York Stock Exchange - NSY),,EUR,"-2,50",EUR,"42,24",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Nasdaq - NDQ),,EUR,"-2,50",EUR,"44,74",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Euronext Milan - MIL),,EUR,"-2,50",EUR,"47,24",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (London Stock Exchange (LSE) - LSE),,EUR,"-2,50",EUR,"49,74",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Tradegate AG - TDG),,EUR,"-2,50",EUR,"52,24",
-// 06-02-2025,17:18,31-01-2025,,,Comisión de conectividad con el mercado 2025 (Xetra - XET),,EUR,"-2,50",EUR,"54,74",
-}
-
-function CSV_formatFlatexInterest(/*const*/ csv)
-{
-  // This one is always 0
-//06-01-2025,06:51,02-01-2025,,,Flatex Interest Income,,EUR,"0,00",EUR,"17,57",
-}
-
-function CSV_formatFees(csv)
+// TODO this should also match withdrawals
+// TODO Check what to do with this
+// DATE,,,Flatex Instant Deposit,,EUR,"500,00",EUR,"85,96",
+// DATE,,,Reservation iDEAL,,EUR,"-500,00",EUR,"-414,04",
+function CSV_formatDeposits(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
-  const opType = "fee";
-  const regex = /^Costes de transacción y\/o externos de DEGIRO$/i; // /i flag makes it case insensitive
+  const opType = "deposit";
+  const regex = /^flatex Deposit/i; // /i flag makes it case insensitive
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
@@ -163,6 +176,7 @@ function CSV_formatFees(csv)
       console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
       return {...row};
     }
+    console.log(row[IN_CSV_HEADER_DESCRIPCION]);
     // Save fields
     return {
       [HEADER_DATE]: row[HEADER_DATE], // Mandatory
@@ -181,6 +195,9 @@ function CSV_formatOperations(/*const*/ csv)
   const regex = /^(\w+)\s+(\d+)\s+(.*?)@([\d,]+)\s+(\w+)\s+\((.+)\)$/i; // /i flag makes it case insensitive
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
+    // match crashes if this is undefined
+    if (!row[IN_CSV_HEADER_DESCRIPCION])
+      return {...row};
     // Match should be:
     //[
     //  'Compra 10 ServiceNow Inc@12,345 USD (US01234P5678)',
@@ -209,14 +226,156 @@ function CSV_formatOperations(/*const*/ csv)
       [HEADER_DATE]: row[HEADER_DATE], // Mandatory
       [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
       [HEADER_MARKED_TAG]: true, // Mandatory
-      [HEADER_SHARE_COUNT]: shareCount,
       [HEADER_STOCK_NAME]: match[3],
+      [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
+      [HEADER_SHARE_COUNT]: shareCount,
       [HEADER_ENTRY_PRICE]: Number(match[4].replace(",", ".")),
       [HEADER_CURRENCY]: match[5],
-      [HEADER_ISIN]: match[6]
     };
   });
 }
+
+function CSV_formatFees(/*const*/ csv)
+{
+  // Finds all rows that match the pattern and gives them a new format
+  const opType = "fee";
+  const regex = /^Costes de transacción y\/o externos de DEGIRO$/i; // /i flag makes it case insensitive
+  // Loop csv and return a new one with formatted matching rows
+  return csv.map( row => {
+    // regex.test is true or false only
+    // Don't touch rows that don't match
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+      return {...row};
+    // If row has already been marked and it matches again it's an issue
+    if (row[HEADER_MARKED_TAG] === true) {
+      console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
+      return {...row};
+    }
+    // Save fields
+    return {
+      [HEADER_DATE]: row[HEADER_DATE], // Mandatory
+      [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
+      [HEADER_MARKED_TAG]: true, // Mandatory
+      [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
+      [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
+      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
+    };
+  });
+}
+
+function CSV_formatAnualFees(/*const*/ csv)
+{
+  // Finds all rows that match the pattern and gives them a new format
+  const opType = "anualFee";
+  const regex = /^Comisión de conectividad con el mercado/i; // /i flag makes it case insensitive
+  // Loop csv and return a new one with formatted matching rows
+  return csv.map( row => {
+    // regex.test is true or false only
+    // Don't touch rows that don't match
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+      return {...row};
+    // If row has already been marked and it matches again it's an issue
+    if (row[HEADER_MARKED_TAG] === true) {
+      console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
+      return {...row};
+    }
+    // Save fields
+    return {
+      [HEADER_DATE]: row[HEADER_DATE], // Mandatory
+      [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
+      [HEADER_MARKED_TAG]: true, // Mandatory
+      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
+    };
+  });
+}
+
+function CSV_formatDividends(/*const*/ csv)
+{
+  // Finds all rows that match the pattern and gives them a new format
+  const opType = "dividend";
+  const regex = /^Dividendo$/i; // /i flag makes it case insensitive
+  // Loop csv and return a new one with formatted matching rows
+  return csv.map( row => {
+    // regex.test is true or false only
+    // Don't touch rows that don't match
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+      return {...row};
+    // If row has already been marked and it matches again it's an issue
+    if (row[HEADER_MARKED_TAG] === true) {
+      console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
+      return {...row};
+    }
+    // Save fields
+    return {
+      [HEADER_DATE]: row[HEADER_DATE], // Mandatory
+      [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
+      [HEADER_MARKED_TAG]: true, // Mandatory
+      [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
+      [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
+      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
+    };
+  });
+}
+
+function CSV_formatDividendRetentions(/*const*/ csv)
+{
+  // Finds all rows that match the pattern and gives them a new format
+  const opType = "dividendRetention";
+  const regex = /^Retención del dividendo$/i; // /i flag makes it case insensitive
+  // Loop csv and return a new one with formatted matching rows
+  return csv.map( row => {
+    // regex.test is true or false only
+    // Don't touch rows that don't match
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+      return {...row};
+    // If row has already been marked and it matches again it's an issue
+    if (row[HEADER_MARKED_TAG] === true) {
+      console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
+      return {...row};
+    }
+    // Save fields
+    return {
+      [HEADER_DATE]: row[HEADER_DATE], // Mandatory
+      [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
+      [HEADER_MARKED_TAG]: true, // Mandatory
+      [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
+      [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
+      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
+    };
+  });
+}
+
+function CSV_formatFlatexInterests(/*const*/ csv)
+{
+  // Finds all rows that match the pattern and gives them a new format
+  const opType = "flatexInterest";
+  const regex = /^Flatex Interest Income$/i; // /i flag makes it case insensitive
+  // Loop csv and return a new one with formatted matching rows
+  return csv.map( row => {
+    // regex.test is true or false only
+    // Don't touch rows that don't match
+    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+      return {...row};
+    // If row has already been marked and it matches again it's an issue
+    if (row[HEADER_MARKED_TAG] === true) {
+      console.error(`${opType} matched an already marked row of type ${row["type"]}. Skipping...`);
+      return {...row};
+    }
+    // Save fields
+    return {
+      [HEADER_DATE]: row[HEADER_DATE], // Mandatory
+      [HEADER_TRANSACTION_TYPE]: opType, // Mandatory
+      [HEADER_MARKED_TAG]: true, // Mandatory
+      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
+    };
+  });
+}
+
 
 function main()
 {
