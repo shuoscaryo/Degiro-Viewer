@@ -140,6 +140,13 @@ function CSV_parse(text)
   return parsed.data;
 }
 
+function CSV_parseNumber(text)
+{
+  // Function for parsing the numbers from Degiro
+  // 123.456.789,56 -> 123456789.56
+  return Number(text.replaceAll(".", "").replace(",", "."));
+}
+
 function CSV_dropCol(/*const*/ csv, col) {
   // Removes a column from the csv
   // If col doesn't exist it doesn't do anything
@@ -205,7 +212,7 @@ function CSV_formatDeposits(/*const*/ csv)
     }
     // Save fields
     return CSV_buildFormattedRow(row, opType, {
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -241,7 +248,7 @@ function CSV_formatOperations(/*const*/ csv)
       return row;
     }
     // If it's a sale, make share count negative
-    let shareCount = Number(match[2].replace(",", "."));
+    let shareCount = CSV_parseNumber(match[2]);
     if (match[1].toLowerCase() === "venta")
       shareCount *= -1;
     // Save fields
@@ -249,7 +256,7 @@ function CSV_formatOperations(/*const*/ csv)
       [HEADER_STOCK_NAME]: match[3],
       [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
       [HEADER_SHARE_COUNT]: shareCount,
-      [HEADER_ENTRY_PRICE]: Number(match[4].replace(".", "").replace(",", ".")), // 1.234,66
+      [HEADER_ENTRY_PRICE]: CSV_parseNumber(match[4]),
       [HEADER_CURRENCY]: match[5],
     });
   });
@@ -278,7 +285,7 @@ function CSV_formatFees(/*const*/ csv)
     return CSV_buildFormattedRow(row, opType, {
       [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
       [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -304,7 +311,7 @@ function CSV_formatAnualFees(/*const*/ csv)
     }
     // Save fields
     return CSV_buildFormattedRow(row, opType, {
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -332,7 +339,7 @@ function CSV_formatDividends(/*const*/ csv)
     return CSV_buildFormattedRow(row, opType, {
       [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
       [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -360,7 +367,7 @@ function CSV_formatDividendRetentions(/*const*/ csv)
     return CSV_buildFormattedRow(row, opType, {
       [HEADER_STOCK_NAME]: row[IN_CSV_HEADER_PRODUCTO],
       [HEADER_ISIN]: row[IN_CSV_HEADER_ISIN],
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -388,7 +395,7 @@ function CSV_formatDegiroGifts(/*const*/ csv)
     }
     // Save fields
     return CSV_buildFormattedRow(row, opType, {
-      [HEADER_AMOUNT]: Number(row[IN_CSV_HEADER_COL_9].replace(",", ".")),
+      [HEADER_AMOUNT]: CSV_parseNumber(row[IN_CSV_HEADER_COL_9]),
       [HEADER_CURRENCY]: row[IN_CSV_HEADER_VARIACION],
     });
   });
@@ -399,6 +406,7 @@ function main()
   const mainDiv = document.querySelector("main");
   mainDiv.append(fileInput());
   newElement("p", {parent: mainDiv, textContent: "hola que tal"});
+  console.log();
 }
 
 sidebar();
