@@ -104,12 +104,13 @@ async function handler_fileUpload(event)
     `count of format dividendRetentions ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "dividendRetention").length}, ` +
     `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
   );
-  csv = CSV_formatFlatexInterests(csv);
+  csv = CSV_formatDegiroGifts(csv);
   console.log(
-    `count of format flatexInterests ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "flatexInterest").length}, ` +
+    `count of format degiroGifts ${csv.filter(row => row[HEADER_TRANSACTION_TYPE] === "degiroGift").length}, ` +
     `currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`
   );
   // Remove random rows
+  console.log("deleting some rows");
   csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /Cambio de Divisa/i);
   csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /^Transferir \w+ su Cuenta de Efectivo en flatexDegiro Bank:/i);
   csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /Degiro Cash Sweep Transfer/i);
@@ -188,12 +189,14 @@ function CSV_formatDeposits(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "deposit";
-  const regex = /^flatex Deposit/i; // /i flag makes it case insensitive
+  const regexList = [
+    /^flatex Deposit/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
     // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -212,7 +215,7 @@ function CSV_formatOperations(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "operation";
-  const regex = /^(\w+)\s+([\d,.]+)\s+(.*?)@([\d,.]+)\s+(\w+)\s+\((.+)\)$/i; // /i flag makes it case insensitive
+  const regex = /^(\w+)\s+([\d,.]+)\s+(.*?)@([\d,.]+)\s+(\w+)\s+\((.+)\)$/i;
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // match crashes if this is undefined
@@ -256,12 +259,15 @@ function CSV_formatFees(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "fee";
-  const regex = /^Costes de transacción y\/o externos de DEGIRO$/i; // /i flag makes it case insensitive
+  const regexList = [
+    /^Costes de transacción y\/o externos de DEGIRO$/i,
+    /^ADR\/GDR Pass-Through Fee/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
-    // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    // Don't touch rows that don't match any of regex
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -282,12 +288,14 @@ function CSV_formatAnualFees(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "anualFee";
-  const regex = /^Comisión de conectividad con el mercado/i; // /i flag makes it case insensitive
+  const regexList = [
+    /^Comisión de conectividad con el mercado/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
     // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -306,12 +314,14 @@ function CSV_formatDividends(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "dividend";
-  const regex = /^Dividendo$/i; // /i flag makes it case insensitive
+  const regexList = [
+    /^Dividendo$/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
     // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -332,12 +342,14 @@ function CSV_formatDividendRetentions(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
   const opType = "dividendRetention";
-  const regex = /^Retención del dividendo$/i; // /i flag makes it case insensitive
+  const regexList = [
+    /^Retención del dividendo$/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
     // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -354,16 +366,20 @@ function CSV_formatDividendRetentions(/*const*/ csv)
   });
 }
 
-function CSV_formatFlatexInterests(/*const*/ csv)
+function CSV_formatDegiroGifts(/*const*/ csv)
 {
   // Finds all rows that match the pattern and gives them a new format
-  const opType = "flatexInterest";
-  const regex = /^Flatex Interest Income$/i; // /i flag makes it case insensitive
+  const opType = "degiroGift";
+  const regexList = [
+    /^Ingresos por Préstamo de Valores/i,
+    /^Promoción DEGIRO reembolso/i,
+    /^Flatex Interest Income$/i,
+  ];
   // Loop csv and return a new one with formatted matching rows
   return csv.map( row => {
     // regex.test is true or false only
     // Don't touch rows that don't match
-    if (regex.test(row[IN_CSV_HEADER_DESCRIPCION]) !== true)
+    if (!regexList.some(regex => regex.test(row[IN_CSV_HEADER_DESCRIPCION])))
       return row;
     // If row has already been marked and it matches again it's an issue
     if (row[HEADER_MARKED_TAG] === true) {
@@ -377,7 +393,6 @@ function CSV_formatFlatexInterests(/*const*/ csv)
     });
   });
 }
-
 
 function main()
 {
