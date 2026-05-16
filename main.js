@@ -155,6 +155,7 @@ function CSV_dropCol(/*const*/ csv, col) {
 
 function CSV_dropRows(/*const*/ csv, col, regex)
 {
+  // Removes rows that match regex in the row[col] field
   return csv.filter(row => regex.test(row[col]) !== true);
 }
 
