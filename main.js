@@ -115,8 +115,9 @@ async function handler_fileUpload(event)
   csv = CSV_dropRows(csv, IN_CSV_HEADER_DESCRIPCION, /Degiro Cash Sweep Transfer/i);
   console.log(`currently marked ${csv.filter(row => row[HEADER_MARKED_TAG]).length} / ${csv.length}`);
   console.table(csv.filter(row => !row[HEADER_MARKED_TAG]));
-  // After parsing everything marked can be removed
+  // After parsing everything marked and "Descripción" can be removed
   csv = CSV_dropCol(csv, HEADER_MARKED_TAG);
+  csv = CSV_dropCol(csv, IN_CSV_HEADER_DESCRIPCION);
 }
 
 function CSV_parse(text)
