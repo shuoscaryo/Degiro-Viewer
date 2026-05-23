@@ -129,6 +129,16 @@ export default async function handler_fileUpload(event)
   // After parsing everything marked and "Descripción" can be removed
   console.log(`Dropping MARKED_TAG column`);
   csv = utils.dropCol(csv, OUT_CSV_HEADER.MARKED_TAG);
-
+  // Print Example row for each type
+  const types = new Set(Object.keys(FORMATS_DICT));
+  for (const row of csv)
+  {
+    const type = row[OUT_CSV_HEADER.TYPE];
+    if (types.has(type))
+    {
+      console.log(`Row of type ${type}`, row[OUT_CSV_HEADER.CONTENT]);
+      types.delete(type);
+    }
+  }
   return csv;
 }
