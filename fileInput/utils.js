@@ -1,4 +1,3 @@
-
 import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/defines.js';
 
 export function dropCol(/*const*/ csv, col) {

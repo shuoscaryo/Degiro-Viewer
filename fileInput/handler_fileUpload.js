@@ -1,5 +1,6 @@
 import * as utils from "./utils.js"
 import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/defines.js';
+import { calcAnualReturn } from '/index.js'; // TEMP
 
 // List with with regex that if match, will be deleted
 const ROWS_TO_DROP = [
@@ -39,6 +40,7 @@ const FORMATS_DICT = {
   "deposit" : {
     regexList: [
       /^flatex Deposit/i,
+      /^Flatex Instant Deposit/i,
     ],
     func: (row, matches) => ({
       [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
@@ -140,5 +142,8 @@ export default async function handler_fileUpload(event)
       types.delete(type);
     }
   }
+  const deposits = csv.filter(row => row[OUT_CSV_HEADER.TYPE] === "deposit");
+  console.log(`deposit len ${deposits.length}`);
+  console.log((calcAnualReturn(4000,deposits, new Date(Date.now()), 0.001) * 100).toFixed(2));
   return csv;
 }
