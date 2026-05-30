@@ -150,4 +150,10 @@ export default async function handler_fileUpload(event)
     }
   }
   g["csv"] = csv;
+  // send event
+  document.dispatchEvent(new CustomEvent("csvUpdate", {
+    detail: {
+      data: g.csv,
+    },
+  }));
 }

@@ -31,7 +31,8 @@ section,
 aside, 
 header, 
 footer, 
-nav {
+nav,
+div {
   display: flex;
 }
 
@@ -39,7 +40,7 @@ nav {
 aside a, 
 aside button, 
 aside input {
-    color: inherit;
+  color: inherit;
 }
 
 /* Force body to be the size of screen */

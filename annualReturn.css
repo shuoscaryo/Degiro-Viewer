@@ -1,0 +1,19 @@
+#annual-return {
+    flex-direction: column;
+    align-items: center;
+}
+
+#annual-return #container {
+    height: 5rem;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+#annual-return #buttons-div {
+    width: 100%;
+}
+
+#annual-return #buttons-div button {
+    flex: 1;
+}
