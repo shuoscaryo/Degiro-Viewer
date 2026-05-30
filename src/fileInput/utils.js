@@ -1,4 +1,4 @@
-import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/defines.js';
+import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/src/defines.js';
 
 export function dropCol(/*const*/ csv, col) {
   // Removes a column from the csv

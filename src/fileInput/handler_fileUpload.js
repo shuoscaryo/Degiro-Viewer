@@ -1,6 +1,6 @@
 import * as utils from "./utils.js"
-import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/defines.js';
-import { calcAnualReturn } from '/index.js'; // TEMP
+import { OUT_CSV_HEADER, IN_CSV_HEADER, CSV_TYPES } from '/src/defines.js';
+import {g} from '/src/globals.js'
 
 // List with with regex that if match, will be deleted
 const ROWS_TO_DROP = [
@@ -17,7 +17,7 @@ const ROWS_TO_DROP = [
 //    wanted for each type of row.
 // }
 const FORMATS_DICT = {
-  "anualFee" : {
+  [CSV_TYPES.ANUAL_FEE] : {
     regexList: [
       /^Comisión de conectividad con el mercado/i,
     ],
@@ -26,7 +26,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "degiroGift" : {
+  [CSV_TYPES.DEGIRO_GIFT]: {
     regexList: [
       /^Ingresos por Préstamo de Valores/i,
       /^Promoción DEGIRO reembolso/i,
@@ -37,7 +37,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "deposit" : {
+  [CSV_TYPES.DEPOSIT]: {
     regexList: [
       /^flatex Deposit/i,
       /^Flatex Instant Deposit/i,
@@ -47,7 +47,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "dividendRetention" : {
+  [CSV_TYPES.DIVIDEND_RETENTION]: {
     regexList: [
       /^Retención del dividendo$/i,
     ],
@@ -58,7 +58,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "fee" : {
+  [CSV_TYPES.FEE]: {
     regexList: [
       /^Costes de transacción y\/o externos de DEGIRO$/i,
       /^ADR\/GDR Pass-Through Fee/i,
@@ -70,7 +70,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "dividend" : {
+  [CSV_TYPES.DIVIDEND]: {
     regexList: [
       /^Dividendo$/i,
     ],
@@ -81,7 +81,7 @@ const FORMATS_DICT = {
       [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
-  "operation" : {
+  [CSV_TYPES.OPERATION]: {
     regexList: [
       /^(\w+)\s+([\d,.]+)\s+(.*?)@([\d,.]+)\s+(\w+)\s+\((.+)\)$/i,
     ],
@@ -109,10 +109,13 @@ export default async function handler_fileUpload(event)
   const file = event.target.files[0];
   const text = await file.text();
   let csv = utils.parseCSV(text);
+
   // Format date into a single variable
   csv = utils.updateDate(csv);
+
   // Drop some cols
-  csv = utils.dropCol(csv, "ID Orden");
+  csv = utils.dropCol(csv, IN_CSV_HEADER.ID_ORDEN);
+
   // format the rows so the info is better stored
   console.log("Formatting rows");
   csv = utils.formatRows(csv, FORMATS_DICT);
@@ -121,16 +124,20 @@ export default async function handler_fileUpload(event)
     console.log(`\tType ${key} matched ${len} / ${csv.length}`);
   });
   console.log(`Currently marked ${csv.filter(row => row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
+
   // Remove rows that match regex
   console.log("Deleting some rows");
   csv = utils.dropRows(csv, IN_CSV_HEADER.DESCRIPCION, ROWS_TO_DROP);
   console.log(`Currently marked ${csv.filter(row => row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
+
   // Remaining unparsed elements
   console.log(`Remaining unparsed elements ${csv.filter(row => !row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
   console.table(csv.filter(row => !row[OUT_CSV_HEADER.MARKED_TAG]));
+
   // After parsing everything marked and "Descripción" can be removed
   console.log(`Dropping MARKED_TAG column`);
   csv = utils.dropCol(csv, OUT_CSV_HEADER.MARKED_TAG);
+
   // Print Example row for each type
   const types = new Set(Object.keys(FORMATS_DICT));
   for (const row of csv)
@@ -142,8 +149,5 @@ export default async function handler_fileUpload(event)
       types.delete(type);
     }
   }
-  const deposits = csv.filter(row => row[OUT_CSV_HEADER.TYPE] === "deposit");
-  console.log(`deposit len ${deposits.length}`);
-  console.log((calcAnualReturn(4000,deposits, new Date(Date.now()), 0.001) * 100).toFixed(2));
-  return csv;
+  g["csv"] = csv;
 }

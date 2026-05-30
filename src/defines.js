@@ -30,3 +30,14 @@ export const OUT_CSV_HEADER = {
   // fee
   AMOUNT: "amount",
 }
+
+// Types of elements in the input csv
+export const CSV_TYPES = {
+  ANUAL_FEE: "anualFee",
+  DEGIRO_GIFT: "degiroGift",
+  DEPOSIT: "deposit",
+  DIVIDEND_RETENTION: "dividendRetention",
+  FEE: "fee",
+  DIVIDEND: "dividend",
+  OPERATION: "operation",
+};

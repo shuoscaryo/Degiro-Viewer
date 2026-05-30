@@ -1,4 +1,4 @@
-import * as g_utils from "/utils.js"
+import * as g_utils from "/src/utils.js"
 import handler_fileUpload from './handler_fileUpload.js'
 
 export default function fileInput()
@@ -8,4 +8,3 @@ export default function fileInput()
   fileInput.addEventListener("change", handler_fileUpload);
   return section;
 }
-
