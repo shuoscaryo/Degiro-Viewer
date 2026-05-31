@@ -66,7 +66,7 @@ export default function annualReturnSection() {
       switchView(noCsvLoadedSection());
     else
       switchView(currentReturnSection());
-  }, { capture: true });
+  });
 
   return component;
 }
