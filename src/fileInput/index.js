@@ -1,10 +1,22 @@
-import * as g_utils from "/src/utils.js"
+import { newElement } from "/src/utils.js"
 import handler_fileUpload from './handler_fileUpload.js'
+import Component from '/src/Component.js'
 
-export default function fileInput()
+export default class FileInput extends Component
 {
-  const section = g_utils.newElement("section");
-  const fileInput = g_utils.newElement("input", {parent: section, accept: ".csv", type: "file"});
-  fileInput.addEventListener("change", handler_fileUpload);
-  return section;
+  constructor()
+  {
+    super(newElement("section", {id: "fileInput"}));
+    this.fileInput = newElement("input", {parent: this.element, accept: ".csv", type: "file"});
+  }
+
+  onMount()
+  {
+    this.fileInput.addEventListener("change", handler_fileUpload);  
+  }
+
+  onDestroy()
+  {
+    this.fileInput.removeEventListener("change", handler_fileUpload);
+  }
 }

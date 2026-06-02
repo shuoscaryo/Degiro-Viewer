@@ -1,15 +1,16 @@
 import { newElement } from '/src/utils.js';
 import calcAnnualReturn from './calcAnnualReturn.js';
 import { g } from '/src/globals.js';
+import Component from "/src/Component.js"
 
-function currentReturnSection() {
+function currentReturn() {
   const component = newElement("div");
   const value = calcAnnualReturn(4000, g.csv, new Date(Date.now()), 0.001);
   component.textContent = `${(value * 100).toFixed(2)}%`;
   return component;
 }
 
-function manualReturnSection() {
+function manualReturn() {
   const component = newElement("div");
   const form = newElement("form", { parent: component });
   newElement("input", {parent: form, name: "profit", step: "0.01", type: "number"});
@@ -28,45 +29,55 @@ function manualReturnSection() {
   return component;
 }
 
-function noCsvLoadedSection() {
+function noCsvLoaded() {
   return newElement("div", { textContent: "No csv loaded yet" });
 }
 
-export default function annualReturnSection() {
-  const component = newElement("section", {id: "annual-return"});  
-  const viewContainer = newElement("div", { parent: component, id: "container" });
-  
-  function switchView(newViewElement) {
-    viewContainer.replaceChildren(newViewElement);
+export default class AnnualReturnSection extends Component
+{
+  constructor()
+  {
+    super(newElement("section", {id: "annual-return"}));
+    this.viewContainer = newElement("div", { parent: this.element, id: "container" });
+    if (g.csv === null)
+      this.switchView(noCsvLoaded());
+    else
+      this.switchView(currentReturn());
+    const buttonsDiv = newElement("div", { parent: this.element, id: "buttons-div" });
+    this.currentButton = newElement("button", { parent: buttonsDiv, textContent: "Real" });
+    this.currentButton.addEventListener("click", () => {
+      if (g.csv === null)
+        return;
+      this.switchView(currentReturn());
+    });
+    
+    this.manualButton = newElement("button", { parent: buttonsDiv, textContent: "Manual" });
+    this.manualButton.addEventListener("click", () => {
+      if (g.csv === null)
+        return;
+      this.switchView(manualReturn());
+    });
   }
 
-  if (g.csv === null)
-    switchView(noCsvLoadedSection());
-  else
-    switchView(currentReturnSection());
+  switchView(view)
+  {
+    this.viewContainer.replaceChildren(view);
+  }
 
-  const buttonsDiv = newElement("div", { parent: component, id: "buttons-div" });
-  
-  const currentButton = newElement("button", { parent: buttonsDiv, textContent: "Real" });
-  currentButton.addEventListener("click", () => {
+  onCsvUpdate = (e) => {
     if (g.csv === null)
-      return;
-    switchView(currentReturnSection());
-  });
-  
-  const manualButton = newElement("button", { parent: buttonsDiv, textContent: "Manual" });
-  manualButton.addEventListener("click", () => {
-    if (g.csv === null)
-      return;
-    switchView(manualReturnSection());
-  });
-
-  component.addEventListener("csvUpdate", (e) => {
-    if (g.csv === null)
-      switchView(noCsvLoadedSection());
+      this.switchView(noCsvLoaded());
     else
-      switchView(currentReturnSection());
-  });
+      this.switchView(currentReturn());
+  }
 
-  return component;
+  onMount()
+  {
+    document.addEventListener("csvUpdate", this.onCsvUpdate);
+  }
+
+  onDestroy()
+  {
+    document.removeEventListener("csvUpdate", this.onCsvUpdate);
+  }
 }

@@ -1,5 +1,5 @@
-import fileInput from "./fileInput/index.js"
-import annualReturnSection from './annualReturn/index.js'
+import FileInput from "./fileInput/index.js"
+import AnnualReturnSection from './annualReturn/index.js'
 import Sidebar from '/src/sidebar/index.js'
 import * as g_utils from "/src/utils.js"
 import Component from "/src/Component.js"
@@ -8,8 +8,8 @@ class Main extends Component {
   constructor ()
   {
     super(document.querySelector("main"));
-    this.element.append(fileInput());
-    this.element.append(annualReturnSection());
+    this.append(new FileInput());
+    this.append(new AnnualReturnSection());
     g_utils.newElement("p", {parent: this.element, textContent: "hola que tal"});
   }
 }
