@@ -1,15 +1,20 @@
 import fileInput from "./fileInput/index.js"
 import annualReturnSection from './annualReturn/index.js'
-import sidebar from './sidebar/index.js'
+import Sidebar from '/src/sidebar/index.js'
 import * as g_utils from "/src/utils.js"
+import Component from "/src/Component.js"
 
-function main()
-{
-  const mainDiv = document.querySelector("main");
-  mainDiv.append(fileInput());
-  mainDiv.append(annualReturnSection());
-  g_utils.newElement("p", {parent: mainDiv, textContent: "hola que tal"});
+class Main extends Component {
+  constructor ()
+  {
+    super(document.querySelector("main"));
+    this.element.append(fileInput());
+    this.element.append(annualReturnSection());
+    g_utils.newElement("p", {parent: this.element, textContent: "hola que tal"});
+  }
 }
 
-sidebar();
-main();
+const sidebar = new Sidebar();
+sidebar.mount();
+const main = new Main();
+main.mount();

@@ -1,6 +1,9 @@
-export default function sidebar()
+import Component from "/src/Component.js"
+
+export default class Sidebar extends Component
 {
-  const sidebarDiv = document.querySelector("aside");
-  sidebarDiv.innerHTML = "";
-  return sidebarDiv;
+  constructor()
+  {
+    super(document.querySelector("aside"));
+  }
 }
