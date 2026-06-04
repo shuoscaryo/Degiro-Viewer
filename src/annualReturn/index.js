@@ -39,10 +39,8 @@ export default class AnnualReturnSection extends Component
   {
     super(newElement("section", {id: "annual-return"}));
     this.viewContainer = newElement("div", { parent: this.element, id: "container" });
-    if (g.csv === null)
-      this.switchView(noCsvLoaded());
-    else
-      this.switchView(currentReturn());
+    this.initialLoad();
+
     const buttonsDiv = newElement("div", { parent: this.element, id: "buttons-div" });
     this.currentButton = newElement("button", { parent: buttonsDiv, textContent: "Real" });
     this.currentButton.addEventListener("click", () => {
@@ -50,9 +48,8 @@ export default class AnnualReturnSection extends Component
         return;
       this.switchView(currentReturn());
     });
-    
-    this.manualButton = newElement("button", { parent: buttonsDiv, textContent: "Manual" });
-    this.manualButton.addEventListener("click", () => {
+    const manualButton = newElement("button", { parent: buttonsDiv, textContent: "Manual" });
+    manualButton.addEventListener("click", () => {
       if (g.csv === null)
         return;
       this.switchView(manualReturn());
@@ -64,7 +61,7 @@ export default class AnnualReturnSection extends Component
     this.viewContainer.replaceChildren(view);
   }
 
-  onCsvUpdate = (e) => {
+  initialLoad = (e) => {
     if (g.csv === null)
       this.switchView(noCsvLoaded());
     else
@@ -73,11 +70,11 @@ export default class AnnualReturnSection extends Component
 
   onMount()
   {
-    document.addEventListener("csvUpdate", this.onCsvUpdate);
+    document.addEventListener("csvUpdate", this.initialLoad);
   }
 
   onDestroy()
   {
-    document.removeEventListener("csvUpdate", this.onCsvUpdate);
+    document.removeEventListener("csvUpdate", this.initialLoad);
   }
 }

@@ -1,7 +1,6 @@
 export default class Component {
     constructor(element) {
         this.element = element;
-        if (this.element)
         this.children = [];
         this.parent = null;
     }
