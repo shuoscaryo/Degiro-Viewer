@@ -1,5 +1,6 @@
 import {newElement} from "/src/utils.js"
 import Component from "/src/Component.js"
+import {g} from "/src/globals.js"
 
 export default class GraphSection extends Component
 {
@@ -7,36 +8,38 @@ export default class GraphSection extends Component
     {
         super(newElement("section", {id: "graphSection"}));
         this.chart = newElement("div", {parent:this.element, id: "chart"});
-        this.data = [
-            {
-                x: [1, 2, 3],
-                y: [4, 5, 6],
-                type: 'scatter'
-            }
-        ];
+    }
+
+    loadGraph = (e) => {
         this.layout = {
             title: 'Ventas mensuales',
-            xaxis: {title: 'Mes'},
+            xaxis: {title: 'Mes', type: "date"},
             yaxis: {title: 'Ventas'}
         };
         this.config = {
             responsive: true,
             displayModeBar: false
         };
-        const traceA = {
-            x: [1, 2, 3],
-            y: [10, 20, 15],
-            stackgroup: 'one',
-            name: 'A'
-        };
+        const traces = Object.entries(g.timeSeries).map(([isin, data]) => ({
+        x: data.x,
+        y: data.y,
+        mode: 'lines+markers',
+        type: 'scatter',
+        name: isin,
+        line: {
+            shape: 'hv'
+        }
+        }));
+        Plotly.newPlot(this.chart, traces, this.layout, this.config);
+    }
 
-        const traceB = {
-            x: [1, 2, 3],
-            y: [5, 8, 12],
-            stackgroup: 'one',
-            name: 'B'
-        };
+    onMount()
+    {
+        document.addEventListener("csvUpdate", this.loadGraph);
+    }
 
-        Plotly.newPlot(this.chart, [traceA, traceB], this.layout, this.config);
+    onDestroy()
+    {
+        document.removeEventListener("csvUpdate", this.loadGraph);
     }
 }

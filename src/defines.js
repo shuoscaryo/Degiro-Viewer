@@ -15,7 +15,7 @@ export const IN_CSV_HEADER = {
 };
 
 // Parsed Headers for different kinds of operations
-export const OUT_CSV_HEADER = {
+export const HEADER = {
   // All rows have these
   DATE: "date",
   TYPE: "type",

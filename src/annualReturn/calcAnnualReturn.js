@@ -1,4 +1,4 @@
-import { OUT_CSV_HEADER, CSV_TYPES } from '/src/defines.js'
+import { HEADER, CSV_TYPES } from '/src/defines.js'
 
 function yearsDelta(date, refDate)
 {
@@ -43,10 +43,10 @@ export default function calcAnnualReturn(profit, csv, nowDate, tolerance)
   */
 
   // Preprocess, sort by date and filter dates after the current time
-  csv = csv.filter(row => row[OUT_CSV_HEADER.TYPE] === CSV_TYPES.DEPOSIT);
+  csv = csv.filter(row => row[HEADER.TYPE] === CSV_TYPES.DEPOSIT);
   csv = csv.map(row => ({
-    date: row[OUT_CSV_HEADER.DATE],
-    amount: row[OUT_CSV_HEADER.CONTENT][OUT_CSV_HEADER.AMOUNT],
+    date: row[HEADER.DATE],
+    amount: row[HEADER.CONTENT][HEADER.AMOUNT],
   }));
   csv = csv.filter(row => row.date < nowDate);
   csv = csv.sort((a, b) => a.date - b.date);

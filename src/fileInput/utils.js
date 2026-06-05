@@ -1,4 +1,4 @@
-import { OUT_CSV_HEADER, IN_CSV_HEADER } from '/src/defines.js';
+import { HEADER, IN_CSV_HEADER } from '/src/defines.js';
 
 export function dropCol(/*const*/ csv, col) {
   // Removes a column from the csv
@@ -34,16 +34,16 @@ export function formatRows(csv, formatsDict)
       if (matches.some(match => match !== null) === false)
         continue;
       // Validation to check that formats don't match same kind of row
-      if (row[OUT_CSV_HEADER.MARKED_TAG] === true) {
+      if (row[HEADER.MARKED_TAG] === true) {
         console.error(`${key} matched an already marked row of type ${row["type"]}. Skipping...`);
         continue;
       }
       // Save fields
       newRow = {
-        [OUT_CSV_HEADER.DATE]: row[OUT_CSV_HEADER.DATE],
-        [OUT_CSV_HEADER.MARKED_TAG]: true, 
-        [OUT_CSV_HEADER.TYPE]: key,
-        [OUT_CSV_HEADER.CONTENT]: value["func"](row, matches)
+        [HEADER.DATE]: row[HEADER.DATE],
+        [HEADER.MARKED_TAG]: true, 
+        [HEADER.TYPE]: key,
+        [HEADER.CONTENT]: value["func"](row, matches)
       };
     }
     // if matched something, returns formatted, else returns unchanged
@@ -63,7 +63,7 @@ export function updateDate(/*const*/ csv)
     const date = new Date(Date.UTC(year, month - 1, day, hours, minutes));
     // return a new row with the new Date field and the used ones removed
     return {
-      [OUT_CSV_HEADER.DATE]: date,
+      [HEADER.DATE]: date,
       ...rest
     };
   });

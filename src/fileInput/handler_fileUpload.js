@@ -1,5 +1,5 @@
 import * as utils from "./utils.js"
-import { OUT_CSV_HEADER, IN_CSV_HEADER, CSV_TYPES } from '/src/defines.js';
+import { HEADER, IN_CSV_HEADER, CSV_TYPES } from '/src/defines.js';
 import {g} from '/src/globals.js'
 
 // List with with regex that if match, will be deleted
@@ -22,8 +22,8 @@ const FORMATS_DICT = {
       /^Comisión de conectividad con el mercado/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.DEGIRO_GIFT]: {
@@ -33,8 +33,8 @@ const FORMATS_DICT = {
       /^Flatex Interest Income$/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.DEPOSIT]: {
@@ -43,8 +43,8 @@ const FORMATS_DICT = {
       /^Flatex Instant Deposit/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.DIVIDEND_RETENTION]: {
@@ -52,10 +52,10 @@ const FORMATS_DICT = {
       /^Retención del dividendo$/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
-      [OUT_CSV_HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
+      [HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.FEE]: {
@@ -64,10 +64,10 @@ const FORMATS_DICT = {
       /^ADR\/GDR Pass-Through Fee/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
-      [OUT_CSV_HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
+      [HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.DIVIDEND]: {
@@ -75,10 +75,10 @@ const FORMATS_DICT = {
       /^Dividendo$/i,
     ],
     func: (row, matches) => ({
-      [OUT_CSV_HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
-      [OUT_CSV_HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
-      [OUT_CSV_HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
-      [OUT_CSV_HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
+      [HEADER.STOCK_NAME]: row[IN_CSV_HEADER.PRODUCTO],
+      [HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
+      [HEADER.AMOUNT]: utils.parseNumber(row[IN_CSV_HEADER.COL_9]),
+      [HEADER.CURRENCY]: row[IN_CSV_HEADER.VARIACION],
     }),
   },
   [CSV_TYPES.OPERATION]: {
@@ -93,11 +93,11 @@ const FORMATS_DICT = {
         shareCount *= -1;
       // Save fields
       return {
-        [OUT_CSV_HEADER.STOCK_NAME]: match[3],
-        [OUT_CSV_HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
-        [OUT_CSV_HEADER.SHARE_COUNT]: shareCount,
-        [OUT_CSV_HEADER.ENTRY_PRICE]: utils.parseNumber(match[4]),
-        [OUT_CSV_HEADER.CURRENCY]: match[5],
+        [HEADER.STOCK_NAME]: match[3],
+        [HEADER.ISIN]: row[IN_CSV_HEADER.ISIN],
+        [HEADER.SHARE_COUNT]: shareCount,
+        [HEADER.ENTRY_PRICE]: utils.parseNumber(match[4]),
+        [HEADER.CURRENCY]: match[5],
       };
     },
   },
@@ -120,40 +120,69 @@ export default async function handler_fileUpload(event)
   console.log("Formatting rows");
   csv = utils.formatRows(csv, FORMATS_DICT);
   Object.keys(FORMATS_DICT).map(key => {
-    const len = csv.filter(row => row[OUT_CSV_HEADER.TYPE] === key).length;
+    const len = csv.filter(row => row[HEADER.TYPE] === key).length;
     console.log(`\tType ${key} matched ${len} / ${csv.length}`);
   });
-  console.log(`Currently marked ${csv.filter(row => row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
+  console.log(`Currently marked ${csv.filter(row => row[HEADER.MARKED_TAG]).length} / ${csv.length}`);
 
   // Remove rows that match regex
   console.log("Deleting some rows");
   csv = utils.dropRows(csv, IN_CSV_HEADER.DESCRIPCION, ROWS_TO_DROP);
-  console.log(`Currently marked ${csv.filter(row => row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
+  console.log(`Currently marked ${csv.filter(row => row[HEADER.MARKED_TAG]).length} / ${csv.length}`);
 
   // Remaining unparsed elements
-  console.log(`Remaining unparsed elements ${csv.filter(row => !row[OUT_CSV_HEADER.MARKED_TAG]).length} / ${csv.length}`);
-  console.table(csv.filter(row => !row[OUT_CSV_HEADER.MARKED_TAG]));
+  console.log(`Remaining unparsed elements ${csv.filter(row => !row[HEADER.MARKED_TAG]).length} / ${csv.length}`);
+  console.table(csv.filter(row => !row[HEADER.MARKED_TAG]));
 
   // After parsing everything marked and "Descripción" can be removed
   console.log(`Dropping MARKED_TAG column`);
-  csv = utils.dropCol(csv, OUT_CSV_HEADER.MARKED_TAG);
+  csv = utils.dropCol(csv, HEADER.MARKED_TAG);
 
+  // Reverse the csv so older times are at lower indexes
+  csv.reverse();
   // Print Example row for each type
   const types = new Set(Object.keys(FORMATS_DICT));
   for (const row of csv)
   {
-    const type = row[OUT_CSV_HEADER.TYPE];
+    const type = row[HEADER.TYPE];
     if (types.has(type))
     {
-      console.log(`Row of type ${type}`, row[OUT_CSV_HEADER.CONTENT]);
+      console.log(`Row of type ${type}`, row[HEADER.CONTENT]);
       types.delete(type);
     }
   }
   g["csv"] = csv;
+  // Create time series for each object
+  const timeSeries = toTimeSeries(csv);
+  console.log(timeSeries);
+  g["timeSeries"] = timeSeries;
   // send event
   document.dispatchEvent(new CustomEvent("csvUpdate", {
     detail: {
-      data: g.csv,
+      data: csv, timeSeries
     },
   }));
+}
+
+function toTimeSeries(csv)
+{
+  const timeSeries = {};
+  for(const row of csv)
+  {
+    if (row[HEADER.TYPE] !== CSV_TYPES.OPERATION)
+      continue;
+    const isin = row[HEADER.CONTENT][HEADER.ISIN];
+    if (!(isin in timeSeries))
+    {
+      timeSeries[isin] = {
+        x: [row[HEADER.DATE]],
+        y: [row[HEADER.CONTENT][HEADER.SHARE_COUNT]],
+      };
+    }
+    else {
+      timeSeries[isin].x.push(row[HEADER.DATE]);
+      timeSeries[isin].y.push(row[HEADER.CONTENT][HEADER.SHARE_COUNT] + timeSeries[isin].y.at(-1));
+    }
+  }
+  return timeSeries;
 }
