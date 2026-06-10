@@ -169,19 +169,24 @@ function toTimeSeries(csv)
   const timeSeries = {};
   for(const row of csv)
   {
-    if (row[HEADER.TYPE] !== CSV_TYPES.OPERATION)
-      continue;
-    const isin = row[HEADER.CONTENT][HEADER.ISIN];
-    if (!(isin in timeSeries))
+    if (row[HEADER.TYPE] === CSV_TYPES.OPERATION)
     {
-      timeSeries[isin] = {
-        x: [row[HEADER.DATE]],
-        y: [row[HEADER.CONTENT][HEADER.SHARE_COUNT]],
-      };
+      const isin = row[HEADER.CONTENT][HEADER.ISIN];
+      if (!(isin in timeSeries))
+      {
+        timeSeries[isin] = {
+          x: [row[HEADER.DATE]],
+          y: [row[HEADER.CONTENT][HEADER.SHARE_COUNT]],
+        };
+      }
+      else {
+        timeSeries[isin].x.push(row[HEADER.DATE]);
+        timeSeries[isin].y.push(row[HEADER.CONTENT][HEADER.SHARE_COUNT] + timeSeries[isin].y.at(-1));
+      }
     }
-    else {
-      timeSeries[isin].x.push(row[HEADER.DATE]);
-      timeSeries[isin].y.push(row[HEADER.CONTENT][HEADER.SHARE_COUNT] + timeSeries[isin].y.at(-1));
+    else
+    {
+      
     }
   }
   return timeSeries;
