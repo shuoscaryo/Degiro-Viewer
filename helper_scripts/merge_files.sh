@@ -33,8 +33,7 @@ while getopts ":e:h" opt; do
   case "$opt" in
     e)
       ext="${OPTARG}"
-      # normalize: remove leading dot if present
-      ext="${ext#.}"
+      ext="${ext#.}" # strip leading dot if present
       extensions+=("$ext")
       ;;
     h)
@@ -60,12 +59,14 @@ if [[ "$#" -eq 0 ]]; then
   error_and_help "You must provide at least one file or directory"
 fi
 
-# Build find expression
-find_expr=()
+# Build proper name matching array for `find`
+name_expr=()
 for ext in "${extensions[@]}"; do
-  find_expr+=( -name "*.${ext}" -o )
+  if [[ ${#name_expr[@]} -gt 0 ]]; then
+    name_expr+=( -o )
+  fi
+  name_expr+=( -name "*.${ext}" )
 done
-unset 'find_expr[${#find_expr[@]}-1]' 2>/dev/null || true
 
 process_file() {
   local file="$1"
@@ -79,12 +80,19 @@ process_file() {
 
 for path in "$@"; do
   if [[ -f "$path" ]]; then
-    process_file "$path"
+    # Check individual file directly against allowed extensions
+    for ext in "${extensions[@]}"; do
+      if [[ "$path" == *".${ext}" ]]; then
+        process_file "$path"
+        break
+      fi
+    done
 
   elif [[ -d "$path" ]]; then
-    while IFS= read -r file; do
+    # Fixed parentheses pass for `find`
+    while IFS= read -r -d '' file; do
       process_file "$file"
-    done < <(find "$path" -type f \( "${find_expr[@]}" \))
+    done < <(find "$path" -type f '(' "${name_expr[@]}" ')' -print0)
 
   else
     echo "Warning: '$path' not found, skipping" >&2
